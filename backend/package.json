@@ -1,0 +1,18 @@
+{
+  "name": "security-report-backend",
+  "version": "1.0.0",
+  "description": "資安週報勒索事件蒐集與分析平台 - Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
+    "xlsx": "^0.18.5"
+  }
+}
