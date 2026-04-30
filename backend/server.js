@@ -7,7 +7,18 @@ async function start() {
   console.log('✅ 資料庫初始化完成');
 
   const app = express();
-  app.use(cors());
+
+  // 允許 Netlify 前端跨域請求
+  app.use(cors({
+    origin: [
+      /\.netlify\.app$/,
+      /\.netlify\.com$/,
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ],
+    credentials: true,
+  }));
+
   app.use(express.json({ limit: '10mb' }));
 
   app.use('/api/events',  require('./routes/events')(db));
