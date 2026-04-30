@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資安事件管理後台</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#242740;--accent:#6366f1;--accent2:#818cf8;--danger:#ef4444;--success:#22c55e;--warn:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--border:#2d3148}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+  header{background:linear-gradient(135deg,#1e1b4b,#312e81);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+  header h1{font-size:1.25rem;font-weight:700;background:linear-gradient(90deg,#a5b4fc,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  header .subtitle{font-size:.75rem;color:var(--muted);margin-top:2px}
+  .header-actions{display:flex;gap:8px;align-items:center}
+  .main{padding:20px;max-width:1400px;margin:0 auto}
+  .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+  .toolbar input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-size:.875rem;min-width:220px;outline:none;transition:.2s}
+  .toolbar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+  .toolbar input::placeholder{color:var(--muted)}
+  btn,button,.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:.875rem;font-weight:600;transition:all .2s;text-decoration:none}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#4f46e5;transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.4)}
+  .btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#16a34a}
+  .btn-warn{background:var(--warn);color:#000}.btn-warn:hover{background:#d97706}
+  .btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#dc2626}
+  .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{background:var(--border)}
+  .btn-sm{padding:5px 10px;font-size:.8rem}
+  .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+  .stat-card .num{font-size:1.6rem;font-weight:700;color:var(--accent2)}
+  .stat-card .label{font-size:.75rem;color:var(--muted);margin-top:4px}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  thead{background:var(--surface2)}
+  th{padding:10px 12px;text-align:left;color:var(--muted);font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border)}
+  td{padding:9px 12px;border-bottom:1px solid rgba(45,49,72,.5);vertical-align:middle;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(99,102,241,.05)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:600}
+  .badge-tw{background:rgba(34,197,94,.15);color:#4ade80}
+  .badge-high{background:rgba(239,68,68,.15);color:#f87171}
+  .badge-mid{background:rgba(245,158,11,.15);color:#fbbf24}
+  .badge-low{background:rgba(99,102,241,.15);color:#a5b4fc}
+  .badge-ok{background:rgba(34,197,94,.15);color:#4ade80}
+  .actions{display:flex;gap:6px;white-space:nowrap}
+  .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:0 0 12px 12px;border-top:1px solid var(--border);margin-top:-1px}
+  .pagination-info{font-size:.8rem;color:var(--muted)}
+  .page-btns{display:flex;gap:6px}
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:760px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  .modal-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+  .modal-header h2{font-size:1rem;font-weight:700}
+  .modal-body{padding:20px 24px}
+  .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form-grid .full{grid-column:1/-1}
+  .field label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:.85rem;outline:none;transition:.2s;font-family:inherit}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+  .field input[type=checkbox]{width:auto;transform:scale(1.2)}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .checkbox-row label{color:var(--text);font-size:.85rem;cursor:pointer}
+  select option{background:var(--surface2)}
+  .toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:10px;font-size:.875rem;font-weight:600;z-index:999;animation:slideIn .3s;display:none}
+  .toast.show{display:block}
+  @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .toast-success{background:var(--success);color:#fff}
+  .toast-error{background:var(--danger);color:#fff}
+  .empty{text-align:center;padding:60px;color:var(--muted)}
+  .sync-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .sync-section h3{font-size:.875rem;font-weight:700;color:var(--accent2);flex-shrink:0}
+  .sync-section p{font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🛡️ 資安事件管理後台</h1>
+    <div class="subtitle">securityinfo-backend.onrender.com — Admin Panel</div>
+  </div>
+  <div class="header-actions">
+    <span id="health-badge" class="badge" style="padding:5px 12px">⏳ 檢查中...</span>
+  </div>
+</header>
+
+<div class="main">
+  <!-- 同步區 -->
+  <div class="sync-section">
+    <h3>📦 資料同步</h3>
+    <div>
+      <p>匯出：下載雲端全部資料到本機 JSON 檔</p>
+    </div>
+    <button class="btn btn-success btn-sm" onclick="exportData()">⬇ 匯出 JSON</button>
+    <div>
+      <p>匯入：從本機 JSON 覆蓋雲端資料（全量取代）</p>
+    </div>
+    <label class="btn btn-warn btn-sm" style="cursor:pointer">
+      ⬆ 匯入 JSON
+      <input type="file" accept=".json" id="importFile" style="display:none" onchange="importData(this)">
+    </label>
+  </div>
+
+  <!-- 統計列 -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><div class="num" id="s-total">—</div><div class="label">總事件數</div></div>
+    <div class="stat-card"><div class="num" id="s-tw" style="color:#4ade80">—</div><div class="label">台灣事件</div></div>
+    <div class="stat-card"><div class="num" id="s-high" style="color:#f87171">—</div><div class="label">高影響</div></div>
+    <div class="stat-card"><div class="num" id="s-report" style="color:#818cf8">—</div><div class="label">列入週報</div></div>
+    <div class="stat-card"><div class="num" id="s-follow" style="color:#fbbf24">—</div><div class="label">需追蹤</div></div>
+  </div>
+
+  <!-- 工具列 -->
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="🔍 搜尋受害者、組織、關鍵字…" oninput="debounceLoad()">
+    <button class="btn btn-primary" onclick="openAdd()">＋ 新增事件</button>
+    <button class="btn btn-ghost" onclick="loadEvents()">🔄 重新整理</button>
+    <span id="loadingText" style="color:var(--muted);font-size:.8rem;display:none">載入中…</span>
+  </div>
+
+  <!-- 表格 -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th><th>受害者</th><th>國家</th><th>產業</th>
+          <th>勒索組織</th><th>事件類型</th><th>影響程度</th>
+          <th>台灣</th><th>週報</th><th style="width:120px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="pagination">
+      <span class="pagination-info" id="pageInfo">—</span>
+      <div class="page-btns">
+        <button class="btn btn-ghost btn-sm" id="prevBtn" onclick="changePage(-1)">← 上一頁</button>
+        <button class="btn btn-ghost btn-sm" id="nextBtn" onclick="changePage(1)">下一頁 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="overlay" id="editOverlay" onclick="closeOnBg(event)">
+  <div class="modal" id="editModal">
+    <div class="modal-header">
+      <h2 id="modalTitle">新增事件</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕ 關閉</button>
+    </div>
+    <div class="modal-body">
+      <form id="eventForm" class="form-grid">
+        <div class="field"><label>事件日期 *</label><input type="date" name="event_date" required></div>
+        <div class="field"><label>受害者名稱 *</label><input type="text" name="victim_name" required></div>
+        <div class="field"><label>受害者網域</label><input type="text" name="victim_domain" placeholder="example.com"></div>
+        <div class="field"><label>國家/地區</label><input type="text" name="country" placeholder="台灣"></div>
+        <div class="field"><label>受害者類別</label>
+          <select name="victim_category">
+            <option value="">請選擇</option>
+            <option>企業</option><option>政府機關</option><option>學校</option>
+            <option>醫療院所</option><option>關鍵基礎設施</option><option>其他</option>
+          </select>
+        </div>
+        <div class="field"><label>產業別</label>
+          <select name="industry">
+            <option value="">請選擇</option>
+            <option>製造業</option><option>半導體</option><option>科技業</option>
+            <option>醫療</option><option>金融</option><option>教育</option>
+            <option>政府</option><option>能源</option><option>零售</option><option>其他</option>
+          </select>
+        </div>
+        <div class="field"><label>子產業</label><input type="text" name="sub_industry"></div>
+        <div class="field"><label>勒索組織</label><input type="text" name="ransomware_group" placeholder="LockBit / Unknown…"></div>
+        <div class="field"><label>事件類型</label>
+          <select name="event_type">
+            <option value="">請選擇</option>
+            <option>勒索軟體</option><option>雙重勒索</option><option>資料外洩</option>
+            <option>憑證外洩</option><option>系統弱點利用</option><option>其他</option>
+          </select>
+        </div>
+        <div class="field"><label>消息來源 *</label><input type="text" name="source_name" required></div>
+        <div class="field full"><label>來源 URL</label><input type="url" name="source_url" placeholder="https://…"></div>
+        <div class="field"><label>外洩狀態</label>
+          <select name="leak_status">
+            <option>待確認</option><option>已公布</option><option>預告公布</option><option>未公布</option>
+          </select>
+        </div>
+        <div class="field"><label>公開揭露狀態</label>
+          <select name="public_disclosure_status">
+            <option>未確認</option><option>查無重大訊息</option><option>新聞已報導</option><option>已發布重大訊息</option>
+          </select>
+        </div>
+        <div class="field"><label>影響程度</label>
+          <select name="impact_level">
+            <option>待確認</option><option>低</option><option>中</option><option>高</option>
+          </select>
+        </div>
+        <div class="field"><label>可信度</label>
+          <select name="confidence_level">
+            <option>待確認</option><option>低</option><option>中</option><option>高</option>
+          </select>
+        </div>
+        <div class="field"><label>標籤（逗號分隔）</label><input type="text" name="tags" placeholder="台灣,高風險,需追蹤"></div>
+        <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end;gap:6px">
+          <div class="checkbox-row"><input type="checkbox" name="is_taiwan" id="isTw"><label for="isTw">台灣事件</label></div>
+          <div class="checkbox-row"><input type="checkbox" name="include_in_report" id="inRep"><label for="inRep">列入週報</label></div>
+          <div class="checkbox-row"><input type="checkbox" name="need_follow_up" id="followUp"><label for="followUp">需要追蹤</label></div>
+        </div>
+        <div class="field full"><label>事件摘要</label><textarea name="summary" rows="3" placeholder="簡短描述事件內容…"></textarea></div>
+        <div class="field full"><label>備註</label><textarea name="notes" rows="2"></textarea></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEvent()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = '';
+let page = 1, pageSize = 20, total = 0, editId = null, searchTimer = null;
+
+// Health check
+fetch(BASE + '/api/health').then(r=>r.json()).then(d=>{
+  const el = document.getElementById('health-badge');
+  if(d.status==='ok'){el.textContent='✅ 後端正常';el.style.background='rgba(34,197,94,.2)';el.style.color='#4ade80';}
+}).catch(()=>{
+  const el = document.getElementById('health-badge');
+  el.textContent='❌ 無法連線';el.style.background='rgba(239,68,68,.2)';el.style.color='#f87171';
+});
+
+async function loadStats(){
+  try{
+    const r=await fetch(BASE+'/api/events?pageSize=9999');
+    const {data}=await r.json();
+    document.getElementById('s-total').textContent=data.length;
+    document.getElementById('s-tw').textContent=data.filter(d=>d.is_taiwan).length;
+    document.getElementById('s-high').textContent=data.filter(d=>d.impact_level==='高').length;
+    document.getElementById('s-report').textContent=data.filter(d=>d.include_in_report).length;
+    document.getElementById('s-follow').textContent=data.filter(d=>d.need_follow_up).length;
+  }catch(e){}
+}
+
+async function loadEvents(){
+  document.getElementById('loadingText').style.display='inline';
+  const kw=document.getElementById('searchInput').value;
+  const url=BASE+`/api/events?page=${page}&pageSize=${pageSize}${kw?'&keyword='+encodeURIComponent(kw):''}`;
+  try{
+    const r=await fetch(url);
+    const res=await r.json();
+    total=res.total;
+    renderTable(res.data);
+    renderPagination();
+    loadStats();
+  }catch(e){toast('載入失敗: '+e.message,'error');}
+  document.getElementById('loadingText').style.display='none';
+}
+
+function renderTable(rows){
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="10" class="empty">目前無資料</td></tr>`;return;}
+  tb.innerHTML=rows.map(r=>`
+    <tr>
+      <td>${r.event_date||''}</td>
+      <td title="${r.victim_name}">${r.victim_name}</td>
+      <td>${r.country||''}</td>
+      <td>${r.industry||''}</td>
+      <td>${r.ransomware_group||''}</td>
+      <td>${r.event_type||''}</td>
+      <td>${impactBadge(r.impact_level)}</td>
+      <td>${r.is_taiwan?'<span class="badge badge-tw">台灣</span>':''}</td>
+      <td>${r.include_in_report?'<span class="badge badge-ok">✓</span>':''}</td>
+      <td><div class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEdit(${r.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEvent(${r.id},'${r.victim_name.replace(/'/g,"\\'")}')">🗑</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function impactBadge(v){
+  const m={高:'badge-high',中:'badge-mid',低:'badge-low'};
+  return v?`<span class="badge ${m[v]||''}">${v}</span>`:v||'';
+}
+
+function renderPagination(){
+  const pages=Math.ceil(total/pageSize)||1;
+  document.getElementById('pageInfo').textContent=`第 ${page} / ${pages} 頁，共 ${total} 筆`;
+  document.getElementById('prevBtn').disabled=page<=1;
+  document.getElementById('nextBtn').disabled=page>=pages;
+}
+
+function changePage(d){page=Math.max(1,page+d);loadEvents();}
+function debounceLoad(){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{page=1;loadEvents();},400);}
+
+// Modal
+function openAdd(){editId=null;document.getElementById('modalTitle').textContent='新增事件';resetForm();document.getElementById('editOverlay').classList.add('open');}
+async function openEdit(id){
+  editId=id;
+  document.getElementById('modalTitle').textContent='編輯事件 #'+id;
+  const r=await fetch(BASE+'/api/events/'+id);
+  const d=await r.json();
+  fillForm(d);
+  document.getElementById('editOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('editOverlay').classList.remove('open');}
+function closeOnBg(e){if(e.target.id==='editOverlay')closeModal();}
+
+function resetForm(){
+  document.getElementById('eventForm').reset();
+  ['isTw','inRep','followUp'].forEach(id=>document.getElementById(id).checked=false);
+}
+
+function fillForm(d){
+  const f=document.getElementById('eventForm');
+  Object.entries(d).forEach(([k,v])=>{
+    const el=f.elements[k];
+    if(!el)return;
+    if(el.type==='checkbox')el.checked=!!v;
+    else el.value=v||'';
+  });
+}
+
+function formData(){
+  const f=document.getElementById('eventForm');
+  const fd=new FormData(f);
+  const data={};
+  for(const [k,v] of fd.entries()) data[k]=v;
+  data.is_taiwan=f.elements.is_taiwan.checked?1:0;
+  data.include_in_report=f.elements.include_in_report.checked?1:0;
+  data.need_follow_up=f.elements.need_follow_up.checked?1:0;
+  return data;
+}
+
+async function saveEvent(){
+  const data=formData();
+  if(!data.event_date||!data.victim_name||!data.source_name){toast('請填寫必填欄位','error');return;}
+  try{
+    const method=editId?'PUT':'POST';
+    const url=editId?BASE+'/api/events/'+editId:BASE+'/api/events';
+    const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    if(!r.ok)throw new Error((await r.json()).error);
+    closeModal();loadEvents();
+    toast(editId?'✅ 更新成功':'✅ 新增成功','success');
+  }catch(e){toast('儲存失敗: '+e.message,'error');}
+}
+
+async function deleteEvent(id,name){
+  if(!confirm(`確定刪除「${name}」？此操作無法復原。`))return;
+  try{
+    const r=await fetch(BASE+'/api/events/'+id,{method:'DELETE'});
+    if(!r.ok)throw new Error('刪除失敗');
+    loadEvents();toast('🗑 已刪除','success');
+  }catch(e){toast(e.message,'error');}
+}
+
+// Sync
+async function exportData(){
+  try{
+    const r=await fetch(BASE+'/api/sync/export');
+    const blob=await r.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`security-data-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    toast('✅ 已匯出 JSON','success');
+  }catch(e){toast('匯出失敗','error');}
+}
+
+async function importData(input){
+  const file=input.files[0]; if(!file)return;
+  if(!confirm('確定用此 JSON 檔案取代雲端全部資料？')) return;
+  try{
+    const text=await file.text();
+    const json=JSON.parse(text);
+    const data=Array.isArray(json)?json:json.data;
+    const r=await fetch(BASE+'/api/sync/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,mode:'replace'})});
+    const res=await r.json();
+    if(!r.ok)throw new Error(res.error);
+    toast(`✅ 已匯入 ${res.imported} 筆資料`,'success');
+    loadEvents();
+  }catch(e){toast('匯入失敗: '+e.message,'error');}
+  input.value='';
+}
+
+function toast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast show toast-'+type;
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+loadEvents();
+</script>
+</body>
+</html>
