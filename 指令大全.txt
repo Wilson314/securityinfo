@@ -25,7 +25,7 @@
   security-report-platform/
   ├── frontend/        ← React 前端（使用者看到的畫面）
   ├── backend/         ← Node.js 後端（資料處理與 API）
-  ├── netlify.toml     ← Netlify/Vercel 部署設定
+  ├── netlify.toml     ← Vercel 部署設定
   ├── render.yaml      ← Render 後端部署設定
   ├── sync-local.js    ← 資料同步腳本
   └── 指令大全.txt     ← 本檔案
