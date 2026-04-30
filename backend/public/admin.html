@@ -6,9 +6,11 @@
 <title>資安事件管理後台</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#242740;--accent:#6366f1;--accent2:#818cf8;--danger:#ef4444;--success:#22c55e;--warn:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--border:#2d3148}
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#242740;--accent:#6366f1;--accent2:#818cf8;--danger:#ef4444;--success:#22c55e;--warn:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--border:#2d3148;--header-bg:linear-gradient(135deg,#1e1b4b,#312e81)}
+  html.light{--bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;--accent:#6366f1;--accent2:#4f46e5;--danger:#ef4444;--success:#16a34a;--warn:#d97706;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--header-bg:linear-gradient(135deg,#4338ca,#6366f1)}
+  html,body{transition:background .25s,color .25s}
   body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
-  header{background:linear-gradient(135deg,#1e1b4b,#312e81);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+  header{background:var(--header-bg);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
   header h1{font-size:1.25rem;font-weight:700;background:linear-gradient(90deg,#a5b4fc,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
   header .subtitle{font-size:.75rem;color:var(--muted);margin-top:2px}
   .header-actions{display:flex;gap:8px;align-items:center}
@@ -72,6 +74,9 @@
   .sync-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
   .sync-section h3{font-size:.875rem;font-weight:700;color:var(--accent2);flex-shrink:0}
   .sync-section p{font-size:.78rem;color:var(--muted)}
+  /* Theme toggle */
+  .theme-toggle{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;transition:all .2s;flex-shrink:0}
+  .theme-toggle:hover{transform:rotate(20deg);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -82,6 +87,7 @@
   </div>
   <div class="header-actions">
     <span id="health-badge" class="badge" style="padding:5px 12px">⏳ 檢查中...</span>
+    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="切換亮/暗主題">🌙</button>
   </div>
 </header>
 
@@ -223,6 +229,20 @@
 <script>
 const BASE = '';
 let page = 1, pageSize = 20, total = 0, editId = null, searchTimer = null;
+
+// Theme
+(function(){
+  const saved = localStorage.getItem('adminTheme');
+  if(saved === 'light') {
+    document.documentElement.classList.add('light');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
+})();
+function toggleTheme(){
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('adminTheme', isLight ? 'light' : 'dark');
+}
 
 // Health check
 fetch(BASE + '/api/health').then(r=>r.json()).then(d=>{
