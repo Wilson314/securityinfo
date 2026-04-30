@@ -1,0 +1,290 @@
+╔══════════════════════════════════════════════════════════════════╗
+║          資安事件平台 — 指令大全（新手完整指南）                 ║
+║          Security Report Platform — Command Reference            ║
+╚══════════════════════════════════════════════════════════════════╝
+
+本檔案整理所有開發、部署、同步會用到的指令與說明。
+適合完全沒有開發經驗的新手閱讀。
+
+================================================================
+【目錄】
+  1. 專案架構說明
+  2. 前置準備（只需做一次）
+  3. 本機開發指令
+  4. Git 版本控制指令（推送到 GitHub）
+  5. 雲端部署說明（Vercel + Render）
+  6. 資料同步指令
+  7. 常見問題 Q&A
+================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 專案架構說明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  security-report-platform/
+  ├── frontend/        ← React 前端（使用者看到的畫面）
+  ├── backend/         ← Node.js 後端（資料處理與 API）
+  ├── netlify.toml     ← Netlify/Vercel 部署設定
+  ├── render.yaml      ← Render 後端部署設定
+  ├── sync-local.js    ← 資料同步腳本
+  └── 指令大全.txt     ← 本檔案
+
+  【線上網址】
+  前端（Vercel）：https://securityinfo.vercel.app
+  後端（Render）：https://securityinfo-backend.onrender.com
+  後端管理介面：  https://securityinfo-backend.onrender.com（開啟即是 Admin UI）
+  GitHub 原始碼： https://github.com/Wilson314/securityinfo
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. 前置準備（只需做一次）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  【安裝 Node.js】
+  → 下載網址：https://nodejs.org（選 LTS 版本）
+  → 安裝完成後，在 cmd 輸入以下確認：
+    node --version
+    npm --version
+
+  【安裝 Git】
+  → 下載網址：https://git-scm.com/download/win
+  → 安裝完成後，在 cmd 確認：
+    git --version
+
+  【設定 Git 個人資訊（只需做一次）】
+    git config --global user.name "Wilson314"
+    git config --global user.email "wliu30192031411@gmail.com"
+
+  【安裝前後端套件（只需做一次）】
+  ★ 前端：
+    cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform\frontend"
+    npm install
+
+  ★ 後端：
+    cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform\backend"
+    npm install
+
+  提示：cd 的意思是「切換到這個資料夾」
+        npm install 的意思是「下載這個專案需要的所有套件」
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. 本機開發指令
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ★★ 需要開兩個 cmd 視窗分別執行 ★★
+
+  【視窗 1：啟動後端（API 伺服器）】
+    cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform\backend"
+    node server.js
+
+  → 看到 "✅ 後端伺服器啟動於 http://localhost:3001" 代表成功
+
+  【視窗 2：啟動前端（網頁）】
+    cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform\frontend"
+    npm run dev
+
+  → 看到 "Local: http://localhost:5173" 代表成功
+  → 用瀏覽器開啟 http://localhost:5173 就能看到網站
+
+  【停止伺服器】
+  → 在 cmd 視窗按 Ctrl + C 即可停止
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. Git 版本控制指令（推送到 GitHub）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  先切換到專案根目錄：
+    cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform"
+
+  ─────────────────────────────────
+  【情境 A：第一次推送到 GitHub】
+  ─────────────────────────────────
+    git init                              ← 初始化 git 儲存庫
+    git add .                             ← 加入所有檔案
+    git commit -m "Initial commit"        ← 建立第一個版本
+    git remote add origin https://Wilson314:ghp_xxxx@github.com/Wilson314/securityinfo.git
+    git branch -M main                    ← 設定主分支名稱為 main
+    git push -u origin main               ← 推送到 GitHub
+
+  注意：ghp_xxxx 是你的 GitHub Token，需替換成真實的 token
+
+  ─────────────────────────────────
+  【情境 B：日常修改後推送更新（最常用）】
+  ─────────────────────────────────
+    git add .                             ← 加入所有修改過的檔案
+    git commit -m "說明這次改了什麼"      ← 建立版本，引號內自己寫說明
+    git push                              ← 推送到 GitHub
+
+  範例 commit 說明（引號內的文字）：
+    "修正登入頁面錯誤"
+    "新增匯出 CSV 功能"
+    "更新首頁設計"
+
+  ─────────────────────────────────
+  【其他常用 Git 指令】
+  ─────────────────────────────────
+    git status                 ← 查看哪些檔案有修改
+    git log --oneline -10      ← 查看最近 10 次提交記錄
+    git diff                   ← 查看修改了哪些內容
+    git pull                   ← 從 GitHub 下載最新版本到本機
+
+  【只推送特定檔案（不推所有改動）】
+    git add 檔案名稱
+    git commit -m "說明"
+    git push
+
+  範例：只推送 netlify.toml
+    git add netlify.toml
+    git commit -m "更新 Netlify 設定"
+    git push
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. 雲端部署說明（Vercel + Render）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ 自動部署：只要執行 git push，Vercel 和 Render 會自動更新！
+  不需要手動操作部署平台。
+
+  【前端 Vercel 部署設定】
+  網址：https://vercel.com
+  建置指令：npm run build
+  根目錄：  frontend
+  輸出目錄：dist
+
+  【後端 Render 部署設定】
+  網址：https://render.com
+  根目錄：  backend
+  建置指令：npm install
+  啟動指令：node server.js
+
+  【手動觸發重新部署（不推送程式碼的情況）】
+  → 登入 Vercel 或 Render，找到專案，點「Redeploy」按鈕
+
+  ⚠️ 注意：Render 免費版本 15 分鐘無人使用會「進入休眠」
+     再次開啟時需要等 30~60 秒才會喚醒，這是正常現象
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. 資料同步指令
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  【方法 A：使用 Admin 管理介面（最簡單，推薦新手使用）】
+
+  1. 開啟後端管理介面：
+     https://securityinfo-backend.onrender.com
+
+  2. 下載雲端資料到本機：
+     → 點畫面上的「⬇ 匯出 JSON」按鈕
+     → 瀏覽器會下載一個 security-data-日期.json 檔案
+     → 建議存放到：
+        C:\Users\wliu\Documents\antigravity\scratch\security-report-platform\backend\data\
+
+  3. 上傳本機資料到雲端：
+     → 點畫面上的「⬆ 匯入 JSON」按鈕
+     → 選擇你的 JSON 備份檔案
+     → 確認後雲端資料會被全部覆蓋（取代）
+
+  ─────────────────────────────────
+
+  【方法 B：使用指令腳本（進階）】
+
+  先切換到後端目錄：
+    cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform\backend"
+
+  ★ 從雲端下載資料到本機：
+    node sync-local.js pull
+
+  ★ 把本機資料上傳覆蓋雲端：
+    node sync-local.js push
+
+  ★ 下載並同時套用到本機：
+    node sync-local.js pull --apply
+
+  下載的資料會存在：
+    backend/data/sync-backup.json
+
+  ─────────────────────────────────
+
+  【建議的工作流程】
+
+  日常修改資料（新增/編輯/刪除事件）：
+    → 直接在 https://securityinfo-backend.onrender.com 的 Admin UI 操作
+
+  定期備份（每週或每次大量操作後）：
+    → 點「匯出 JSON」把資料存到本機
+
+  想要把備份資料恢復到雲端：
+    → 點「匯入 JSON」上傳備份檔案
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. 常見問題 Q&A
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Q：打開網站是空白或 Cannot GET /？
+  A：後端可能在休眠，等 30~60 秒後重新整理。
+     或確認後端 Render 是否正常運作。
+
+  Q：git push 失敗，說 token 無效？
+  A：GitHub Token 可能過期，到 GitHub 重新建立：
+     GitHub → Settings → Developer settings → Personal access tokens
+     → Generate new token（勾選 repo 權限）
+
+  Q：執行 node 或 git 顯示「找不到命令」？
+  A：需要重新開啟 cmd 視窗，或重新安裝 Node.js / Git。
+     安裝後一定要重新開啟 cmd。
+
+  Q：Admin UI 匯入資料後，前端網站資料怎麼沒更新？
+  A：Render 免費版資料在記憶體中，重新整理前端頁面即可看到更新。
+     如果後端重新部署或重啟，資料會回到初始狀態，需要重新匯入。
+
+  Q：Vercel 網站改了程式碼但沒更新？
+  A：確認有執行 git add → git commit → git push。
+     Vercel 只會在 push 後自動更新。
+
+  Q：如何查看我 push 了哪些版本？
+  A：git log --oneline -10
+     或到 https://github.com/Wilson314/securityinfo/commits/main 查看
+
+  Q：不小心改壞了，怎麼恢復上一個版本？
+  A：git log --oneline -5        ← 找到你要恢復的版本代號（7位英數字）
+     git checkout 版本代號 -- 檔案名稱   ← 恢復特定檔案
+     或：git revert HEAD         ← 撤銷最後一次 commit
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【快速備忘卡片（剪下來貼在螢幕旁！）】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📁 切換到專案目錄：
+     cd "C:\Users\wliu\Documents\antigravity\scratch\security-report-platform"
+
+  🚀 推送程式碼到 GitHub（每次改完都要做）：
+     git add .
+     git commit -m "改了什麼"
+     git push
+
+  💻 啟動本機後端：
+     cd backend && node server.js
+
+  🌐 啟動本機前端：
+     cd frontend && npm run dev
+
+  ⬇ 下載雲端資料：
+     cd backend && node sync-local.js pull
+
+  ⬆ 上傳資料到雲端：
+     cd backend && node sync-local.js push
+
+  🔗 重要網址：
+     前端網站：https://securityinfo.vercel.app
+     後端管理：https://securityinfo-backend.onrender.com
+     GitHub：  https://github.com/Wilson314/securityinfo
+
+================================================================
+最後更新：2026-04-30
+================================================================
